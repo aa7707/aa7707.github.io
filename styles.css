@@ -294,6 +294,51 @@ h3 {
     margin-bottom: 3rem;
 }
 
+/* Transaction Styles */
+.transaction-item {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.transaction-item:last-child {
+    border-bottom: none;
+}
+
+.transaction-income {
+    color: var(--success-color);
+    font-weight: 500;
+}
+
+.transaction-expense {
+    color: var(--error-color);
+    font-weight: 500;
+}
+
+/* Update existing table styles for transactions */
+.report-table .income-row td {
+    color: var(--success-color);
+    font-weight: 500;
+}
+
+.report-table .expense-row td {
+    color: var(--error-color);
+    font-weight: 500;
+}
+
+/* Amount styling */
+.amount-income {
+    color: var(--success-color);
+    font-weight: 600;
+}
+
+.amount-expense {
+    color: var(--error-color);
+    font-weight: 600;
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
     :root {

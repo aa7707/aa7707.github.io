@@ -365,10 +365,25 @@ function renderTransactions() {
         new Date(b.date) - new Date(a.date)
     );
     
+    content += '<div class="transaction-list">';
     sortedTransactions.forEach(tx => {
         const formattedDate = new Date(tx.date).toLocaleDateString();
-        content += `<p>${formattedDate} - ${tx.name}: ₹${tx.amount} (${tx.envelope || 'No Envelope'})</p>`;
+        const isIncome = tx.type === 'income';
+        const amountClass = isIncome ? 'amount-income' : 'amount-expense';
+        const transactionClass = isIncome ? 'transaction-income' : 'transaction-expense';
+        
+        content += `
+            <div class="transaction-item">
+                <div class="transaction-details">
+                    <span class="transaction-date">${formattedDate}</span>
+                    <span class="${transactionClass}">${tx.name}</span>
+                    ${tx.envelope ? `<span class="transaction-envelope">(${tx.envelope})</span>` : ''}
+                </div>
+                <span class="${amountClass}">₹${tx.amount.toLocaleString()}</span>
+            </div>`;
     });
+    content += '</div>';
+    
     updateDOMContent('transaction-list', content);
 }
 
