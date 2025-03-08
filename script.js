@@ -42,9 +42,36 @@ function updateDOMContent(elementId, content) {
 }
 
 function showSection(sectionId) {
+    // Hide all sections
     const sections = document.querySelectorAll('.content-section');
     sections.forEach(section => section.classList.add('hidden'));
-    document.getElementById(sectionId).classList.remove('hidden');
+    
+    // Show target section
+    const targetSection = document.getElementById(sectionId);
+    targetSection.classList.remove('hidden');
+    
+    // Update active nav button
+    const navButtons = document.querySelectorAll('.nav-button');
+    navButtons.forEach(button => {
+        button.classList.remove('active');
+        if (button.getAttribute('onclick').includes(sectionId)) {
+            button.classList.add('active');
+        }
+    });
+    
+    // Close mobile menu if open
+    const nav = document.getElementById('nav');
+    const toggle = document.getElementById('mobile-menu-toggle');
+    if (nav.classList.contains('active')) {
+        nav.classList.remove('active');
+        toggle.classList.remove('active');
+    }
+
+    // Smooth scroll to section
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
 }
 
 // Load saved state from localStorage
