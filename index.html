@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Management App</title>
+    <link rel="stylesheet" href="styles.css"> <!-- External CSS for styling -->
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-content">
+            <button id="mobile-menu-toggle" class="mobile-menu-toggle" aria-label="Toggle navigation menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <h1>Budget Management App</h1>
+            <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+                <span class="light-icon">🌞</span>
+                <span class="dark-icon">🌙</span>
+            </button>
+        </div>
+    </header>
+
+    <div id="app">
+        <!-- Navigation Section -->
+        <nav id="nav" class="main-nav">
+            <div class="nav-content">
+                <button class="nav-button" onclick="showSection('accounts')">Manage Accounts</button>
+                <button class="nav-button" onclick="showSection('income')">Enter Income</button>
+                <button class="nav-button" onclick="showSection('envelopes')">Manage Envelopes</button>
+                <button class="nav-button" onclick="showSection('transactions')">Add Transactions</button>
+                <button class="nav-button" onclick="showSection('goals')">Manage Goals</button>
+                <button class="nav-button" onclick="showSection('report'); displayReport()">View Report</button>
+                <button class="nav-button danger" onclick="resetData()">Reset Data</button>
+            </div>
+        </nav>
+
+        <!-- Main Content Section -->
+        <main id="main" class="main-content">
+            <!-- Account Management Section -->
+            <section id="accounts" class="content-section hidden">
+                <h2>Manage Bank Accounts</h2>
+                <div class="account-form">
+                    <input type="text" id="account-name" placeholder="Account Name (e.g., Primary Savings)">
+                    <input type="text" id="account-number" placeholder="Last 4 digits of account number" maxlength="4">
+                    <select id="account-type">
+                        <option value="">Select Account Type</option>
+                        <option value="salary">Salary Account</option>
+                        <option value="savings">Savings Account</option>
+                        <option value="emergency">Emergency Savings</option>
+                    </select>
+                    <input type="number" id="account-balance" placeholder="Current Balance">
+                    <button onclick="addAccount()">Add Account</button>
+                </div>
+                <div id="account-display"></div>
+            </section>
+
+            <!-- Income Section -->
+            <section id="income" class="content-section hidden">
+                <h2>Enter Income</h2>
+                <input type="number" id="income-input" placeholder="Enter Monthly Income (₹)">
+                <select id="income-account">
+                    <option value="">Select Account for Income</option>
+                </select>
+                <button onclick="saveIncome()">Save Income</button>
+                <p id="income-status"></p>
+                
+                <div class="month-end-actions">
+                    <h3>Month End Actions</h3>
+                    <select id="month-end-account">
+                        <option value="">Select Account for Unallocated Funds</option>
+                    </select>
+                    <button onclick="moveUnallocatedToAccount()" class="month-end-button">Move Unallocated Funds to Account</button>
+                </div>
+            </section>
+
+            <!-- Envelopes Section -->
+            <section id="envelopes" class="content-section hidden">
+                <h2>Manage Envelopes</h2>
+                <input type="text" id="envelope-name" placeholder="Envelope Name">
+                <input type="number" id="envelope-amount" placeholder="Envelope Amount in ₹">
+                <button onclick="addEnvelope()">Add Envelope</button>
+                <button onclick="moveUnusedToUnallocated()">Move Unused Amount to Unallocated Funds</button>
+                <div id="envelope-display"></div>
+            </section>
+
+            <!-- Transactions Section -->
+            <section id="transactions" class="content-section hidden">
+                <h2>Add Transactions</h2>
+                <input type="text" id="transaction-name" placeholder="Transaction Name">
+                <input type="number" id="transaction-amount" placeholder="Transaction Amount in ₹">
+                <select id="transaction-account">
+                    <option value="">Select Account</option>
+                </select>
+                <select id="transaction-envelope">
+                    <option value="">No Envelope</option>
+                </select>
+                <button onclick="addTransaction()">Add Transaction</button>
+                <div id="transaction-list"></div>
+                <div id="last-updated"></div>
+            </section>
+
+            <!-- Goals Section -->
+            <section id="goals" class="content-section hidden">
+                <h2>Manage Goals</h2>
+                <input type="text" id="goal-name" placeholder="Goal Name">
+                <input type="number" id="goal-amount" placeholder="Goal Amount in ₹">
+                <button onclick="addGoal()">Add Goal</button>
+                <select id="goal-dropdown"></select>
+                <input type="number" id="goal-allocation" placeholder="Amount to Allocate in ₹">
+                <button onclick="allocateToGoal()">Allocate Amount</button>
+                <div id="goal-display"></div>
+            </section>
+
+            <!-- Report Section -->
+            <section id="report" class="content-section hidden">
+                <h2>View Report</h2>
+                <div id="report-display"></div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script> <!-- External JavaScript -->
+</body>
+</html>
