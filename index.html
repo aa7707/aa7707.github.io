@@ -3,57 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A comprehensive budget management application for tracking expenses, savings, and financial goals">
     <title>Budget Management App</title>
-    <link rel="stylesheet" href="styles.css"> <!-- External CSS for styling -->
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <header class="main-header">
         <div class="header-content">
             <button id="mobile-menu-toggle" class="mobile-menu-toggle" aria-label="Toggle navigation menu">
-                <span></span>
-                <span></span>
-                <span></span>
+                <i class="fas fa-bars"></i>
             </button>
-            <h1>Budget Management App</h1>
+            <h1><i class="fas fa-wallet"></i> Budget Management</h1>
             <button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
-                <span class="light-icon">🌞</span>
-                <span class="dark-icon">🌙</span>
+                <i class="fas fa-sun light-icon"></i>
+                <i class="fas fa-moon dark-icon"></i>
             </button>
         </div>
     </header>
 
     <div id="app">
-        <!-- Navigation Section -->
         <nav id="nav" class="main-nav">
             <div class="nav-content">
-                <button class="nav-button" onclick="showSection('accounts')">Manage Accounts</button>
-                <button class="nav-button" onclick="showSection('income')">Enter Income</button>
-                <button class="nav-button" onclick="showSection('envelopes')">Manage Envelopes</button>
-                <button class="nav-button" onclick="showSection('transactions')">Add Transactions</button>
-                <button class="nav-button" onclick="showSection('goals')">Manage Goals</button>
-                <button class="nav-button" onclick="showSection('report'); displayReport()">View Report</button>
-                <button class="nav-button danger" onclick="resetData()">Reset Data</button>
+                <button class="nav-button" onclick="showSection('dashboard')">
+                    <i class="fas fa-home"></i> Dashboard
+                </button>
+                <button class="nav-button" onclick="showSection('accounts')">
+                    <i class="fas fa-university"></i> Manage Accounts
+                </button>
+                <button class="nav-button" onclick="showSection('income')">
+                    <i class="fas fa-money-bill-wave"></i> Enter Income
+                </button>
+                <button class="nav-button" onclick="showSection('envelopes')">
+                    <i class="fas fa-envelope"></i> Manage Envelopes
+                </button>
+                <button class="nav-button" onclick="showSection('transactions')">
+                    <i class="fas fa-exchange-alt"></i> Add Transactions
+                </button>
+                <button class="nav-button" onclick="showSection('goals')">
+                    <i class="fas fa-bullseye"></i> Manage Goals
+                </button>
+                <button class="nav-button" onclick="showSection('report'); displayReport()">
+                    <i class="fas fa-chart-line"></i> View Report
+                </button>
+                <button class="nav-button danger" onclick="resetData()">
+                    <i class="fas fa-trash-alt"></i> Reset Data
+                </button>
             </div>
         </nav>
 
-        <!-- Main Content Section -->
         <main id="main" class="main-content">
-            <!-- Account Management Section -->
-            <section id="accounts" class="content-section hidden">
-                <h2>Manage Bank Accounts</h2>
-                <div class="account-form">
-                    <input type="text" id="account-name" placeholder="Account Name (e.g., Primary Savings)">
-                    <input type="text" id="account-number" placeholder="Last 4 digits of account number" maxlength="4">
-                    <select id="account-type">
-                        <option value="">Select Account Type</option>
-                        <option value="salary">Salary Account</option>
-                        <option value="savings">Savings Account</option>
-                        <option value="emergency">Emergency Savings</option>
-                    </select>
-                    <input type="number" id="account-balance" placeholder="Current Balance">
-                    <button onclick="addAccount()">Add Account</button>
+            <!-- Dashboard Overview -->
+            <section id="dashboard" class="content-section hidden">
+                <h2>Dashboard</h2>
+                <div class="dashboard-summary">
+                    <div class="summary-card">
+                        <h3>Total Balance</h3>
+                        <p id="total-balance">₹0</p>
+                    </div>
+                    <div class="summary-card">
+                        <h3>Unallocated Funds</h3>
+                        <p id="unallocated-amount">₹0</p>
+                    </div>
                 </div>
-                <div id="account-display"></div>
+                <div class="chart-container">
+                    <canvas id="monthly-chart"></canvas>
+                </div>
+            </section>
+
+            <section id="accounts" class="content-section hidden">
+                <h2><i class="fas fa-university"></i> Manage Bank Accounts</h2>
+                <div class="account-form card">
+                    <div class="form-group">
+                        <label for="account-name">Account Name</label>
+                        <input type="text" id="account-name" placeholder="e.g., Primary Savings">
+                    </div>
+                    <div class="form-group">
+                        <label for="account-number">Account Number (last 4 digits)</label>
+                        <input type="text" id="account-number" placeholder="XXXX" maxlength="4" pattern="[0-9]{4}">
+                    </div>
+                    <div class="form-group">
+                        <label for="account-type">Account Type</label>
+                        <select id="account-type">
+                            <option value="">Select Account Type</option>
+                            <option value="salary">Salary Account</option>
+                            <option value="savings">Savings Account</option>
+                            <option value="emergency">Emergency Savings</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="account-balance">Current Balance</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" id="account-balance" placeholder="0.00" step="0.01">
+                        </div>
+                    </div>
+                    <button onclick="addAccount()" class="btn-primary">
+                        <i class="fas fa-plus"></i> Add Account
+                    </button>
+                </div>
+                <div id="account-display" class="grid-container"></div>
             </section>
 
             <!-- Income Section -->
@@ -121,6 +170,8 @@
         </main>
     </div>
 
-    <script src="script.js"></script> <!-- External JavaScript -->
+    <!-- Add Chart.js for better visualizations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

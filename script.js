@@ -1,7 +1,32 @@
-// Theme management
+// State management
+const state = {
+    monthlyIncome: 0,
+    envelopes: {},
+    transactions: [],
+    goals: {},
+    lastUpdated: null,
+    monthlyHistory: {},
+    unallocatedAmount: 0,
+    accounts: {}
+};
+
+// Theme management with improved transitions
 function setTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
+    updateThemeIcons(theme);
+}
+
+function updateThemeIcons(theme) {
+    const sunIcon = document.querySelector('.fa-sun');
+    const moonIcon = document.querySelector('.fa-moon');
+    if (theme === 'dark') {
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'inline-block';
+    } else {
+        sunIcon.style.display = 'inline-block';
+        moonIcon.style.display = 'none';
+    }
 }
 
 function toggleTheme() {
@@ -16,161 +41,345 @@ function initTheme() {
     setTheme(savedTheme);
 }
 
-// State management
-const state = {
-    monthlyIncome: 0,
-    envelopes: {},
-    transactions: [],
-    goals: {},
-    lastUpdated: null,
-    monthlyHistory: {}, // Store monthly data
-    unallocatedAmount: 0,
-    accounts: {} // New accounts object
+// Helper Functions
+function updateDOMContent(elementId, content) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.innerHTML = content;
+    }
+}
+
+// Account Display Functions
+function updateAccountDisplay() {
+    let content = '<h3>Your Bank Accounts:</h3>';
+    
+    // Group accounts by type
+    const accountsByType = {
+        salary: [],
+        savings: [],
+        emergency: []
+    };
+
+    for (const [accountKey, account] of Object.entries(state.accounts)) {
+        accountsByType[account.type].push({ ...account, key: accountKey });
+    }
+
+    // Render each account type section
+    for (const [type, accounts] of Object.entries(accountsByType)) {
+        if (accounts.length > 0) {
+            content += `<h4>${type.charAt(0).toUpperCase() + type.slice(1)} Accounts</h4>`;
+            content += '<table class="report-table">';
+            content += `
+                <tr>
+                    <th>Account Name</th>
+                    <th>Last 4 Digits</th>
+                    <th>Balance</th>
+                    <th>Actions</th>
+                </tr>`;
+
+            accounts.forEach(account => {
+                content += `
+                    <tr>
+                        <td>${account.name}</td>
+                        <td>****${account.number}</td>
+                        <td>₹${account.balance.toLocaleString()}</td>
+                        <td>
+                            <button onclick="updateAccountBalance('${account.key}')" class="small-button">Update Balance</button>
+                            <button onclick="transferFunds('${account.key}')" class="small-button">Transfer</button>
+                            <button onclick="addAccountRule('${account.key}')" class="small-button">Add Rule</button>
+                            ${account.type === 'emergency' ? `<button onclick="trackEmergencyFund('${account.key}')" class="small-button">Emergency Fund</button>` : ''}
+                        </td>
+                    </tr>`;
+            });
+            content += '</table>';
+        }
+    }
+
+    updateDOMContent('account-display', content);
+}
+
+// Data Validation Functions
+const validators = {
+    amount: (value) => {
+        const num = parseFloat(value);
+        return !isNaN(num) && num >= 0;
+    },
+    accountNumber: (value) => /^\d{4}$/.test(value),
+    required: (value) => value !== null && value !== undefined && value.toString().trim() !== '',
+    accountName: (value) => typeof value === 'string' && value.length >= 3 && value.length <= 50
 };
 
-// Helper Functions
-function validateInput(value, fieldName) {
-    if (!value && value !== 0 || isNaN(value) || value < 0) {
-        alert(`Invalid input for ${fieldName}. Please enter a non-negative number.`);
-        return false;
+function validateInput(value, validations) {
+    // If validations is a string (old format), convert it to array with single item
+    if (typeof validations === 'string') {
+        validations = ['amount'];
     }
-    return true;
+    // If validations is not an array, make it one
+    if (!Array.isArray(validations)) {
+        validations = [validations];
+    }
+    return validations.every(validation => validators[validation](value));
 }
 
-function updateDOMContent(elementId, content) {
-    document.getElementById(elementId).innerHTML = content;
+// Improved Error Handling
+function showError(message, element) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'status-message status-error';
+    errorDiv.textContent = message;
+    
+    if (element) {
+        element.parentNode.insertBefore(errorDiv, element.nextSibling);
+        setTimeout(() => errorDiv.remove(), 5000);
+    }
 }
 
-function showSection(sectionId) {
-    // Hide all sections
-    const sections = document.querySelectorAll('.content-section');
-    sections.forEach(section => section.classList.add('hidden'));
+function showSuccess(message, element) {
+    const successDiv = document.createElement('div');
+    successDiv.className = 'status-message status-success';
+    successDiv.textContent = message;
     
-    // Show target section
-    const targetSection = document.getElementById(sectionId);
-    targetSection.classList.remove('hidden');
+    if (element) {
+        element.parentNode.insertBefore(successDiv, element.nextSibling);
+        setTimeout(() => successDiv.remove(), 5000);
+    }
+}
+
+// Initialize Application
+document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+    loadState();
     
-    // Update active nav button
-    const navButtons = document.querySelectorAll('.nav-button');
-    navButtons.forEach(button => {
-        button.classList.remove('active');
-        if (button.getAttribute('onclick').includes(sectionId)) {
-            button.classList.add('active');
+    // Set up event listeners for real-time validation
+    const inputs = document.querySelectorAll('input[type="number"]');
+    inputs.forEach(input => {
+        input.addEventListener('input', (e) => {
+            if (!validators.amount(e.target.value)) {
+                e.target.classList.add('invalid');
+            } else {
+                e.target.classList.remove('invalid');
+            }
+        });
+    });
+
+    // Initialize mobile menu toggle
+    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+    const nav = document.getElementById('nav');
+    const mainContent = document.getElementById('main');
+
+    mobileMenuToggle.addEventListener('click', () => {
+        nav.classList.toggle('active');
+        mobileMenuToggle.classList.toggle('active');
+        mainContent.classList.toggle('nav-open');
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!nav.contains(e.target) && !mobileMenuToggle.contains(e.target) && nav.classList.contains('active')) {
+            nav.classList.remove('active');
+            mobileMenuToggle.classList.remove('active');
+            mainContent.classList.remove('nav-open');
         }
     });
-    
-    // Close mobile menu if open
-    const nav = document.getElementById('nav');
-    const toggle = document.getElementById('mobile-menu-toggle');
-    if (nav.classList.contains('active')) {
-        nav.classList.remove('active');
-        toggle.classList.remove('active');
-    }
 
-    // Smooth scroll to section
-    window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
+    // Close menu when clicking on a nav button
+    const navButtons = document.querySelectorAll('.nav-button');
+    navButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            if (window.innerWidth <= 768) {  // Only on mobile
+                nav.classList.remove('active');
+                mobileMenuToggle.classList.remove('active');
+                mainContent.classList.remove('nav-open');
+            }
+        });
     });
+
+    // Show accounts section by default
+    showSection('accounts');
+});
+
+// Save and Load State
+function saveState() {
+    localStorage.setItem('budgetAppState', JSON.stringify(state));
+    state.lastUpdated = new Date().toISOString();
+    updateLastUpdated();
 }
 
-// Load saved state from localStorage
 function loadState() {
     const savedState = localStorage.getItem('budgetAppState');
     if (savedState) {
-        const parsedState = JSON.parse(savedState);
-        Object.assign(state, parsedState);
-        renderAll();
+        Object.assign(state, JSON.parse(savedState));
+        updateAccountDisplay();
+        updateEnvelopeDisplay();
+        updateTransactionList();
+        updateGoalDisplay();
+        updateDashboard();
+        updateLastUpdated();
+        updateAccountDropdowns();
     }
 }
 
-// Save state to localStorage
-function saveState() {
-    state.lastUpdated = new Date().toISOString();
-    localStorage.setItem('budgetAppState', JSON.stringify(state));
-}
-
-// Render all sections
-function renderAll() {
-    renderEnvelopes();
-    renderTransactions();
-    renderGoals();
-    renderAccounts();
-    updateDropdown('transaction-envelope', Object.keys(state.envelopes), 'No Envelope');
-    updateDropdown('goal-dropdown', Object.keys(state.goals), 'Select Goal');
-    
-    // Update account dropdowns
-    const accountOptions = Object.entries(state.accounts).map(([key, account]) => ({
-        value: key,
-        text: `${account.name} (${account.type})`
-    }));
-    
-    updateDropdown('income-account', accountOptions, 'Select Account for Income');
-    updateDropdown('month-end-account', accountOptions, 'Select Account for Unallocated Funds');
-    updateDropdown('transaction-account', accountOptions, 'Select Account');
-    
-    if (state.monthlyIncome > 0) {
-        updateDOMContent('income-status', `Monthly Income: ₹${state.monthlyIncome}`);
+function updateLastUpdated() {
+    const lastUpdatedElement = document.getElementById('last-updated');
+    if (lastUpdatedElement && state.lastUpdated) {
+        const date = new Date(state.lastUpdated);
+        lastUpdatedElement.textContent = `Last updated: ${date.toLocaleString()}`;
     }
 }
 
-// Income Management
-function saveIncome() {
-    const incomeInput = parseFloat(document.getElementById('income-input').value);
-    const incomeAccount = document.getElementById('income-account').value;
+// Dashboard Updates
+function updateDashboard() {
+    const totalBalance = Object.values(state.accounts)
+        .reduce((sum, account) => sum + account.balance, 0);
+    
+    document.getElementById('total-balance').textContent = 
+        new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' })
+            .format(totalBalance);
+    
+    document.getElementById('unallocated-amount').textContent = 
+        new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' })
+            .format(state.unallocatedAmount);
+    
+    updateMonthlyChart();
+}
 
-    if (!validateInput(incomeInput, "Income")) return;
-    if (!incomeAccount) {
-        alert('Please select an account for the income.');
+// Chart Implementation
+function updateMonthlyChart() {
+    const ctx = document.getElementById('monthly-chart');
+    if (!ctx) return;
+    
+    // Destroy existing chart if it exists
+    if (window.monthlyChart) {
+        window.monthlyChart.destroy();
+    }
+    
+    const labels = Object.keys(state.monthlyHistory).slice(-6);
+    const data = labels.map(month => {
+        const monthData = state.monthlyHistory[month];
+        return {
+            income: monthData?.income || 0,
+            expenses: monthData?.expenses || 0
+        };
+    });
+    
+    window.monthlyChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Income',
+                data: data.map(d => d.income),
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }, {
+                label: 'Expenses',
+                data: data.map(d => d.expenses),
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+// Transaction Management
+function addTransaction() {
+    const name = document.getElementById('transaction-name').value.trim();
+    const amount = parseFloat(document.getElementById('transaction-amount').value);
+    const accountKey = document.getElementById('transaction-account').value;
+    const envelope = document.getElementById('transaction-envelope').value;
+    
+    // Validate inputs
+    if (!validateInput(name, ['required'])) {
+        showError('Please enter a transaction name', document.getElementById('transaction-name'));
         return;
     }
-
-    const currentMonth = new Date().toISOString().slice(0, 7);
-    state.monthlyIncome = incomeInput;
     
-    // Update account balance
-    const account = state.accounts[incomeAccount];
+    if (!validateInput(amount, ['amount'])) {
+        showError('Please enter a valid amount', document.getElementById('transaction-amount'));
+        return;
+    }
+    
+    if (!accountKey) {
+        showError('Please select an account', document.getElementById('transaction-account'));
+        return;
+    }
+    
+    // Get account and validate balance
+    const account = state.accounts[accountKey];
     if (!account) {
-        alert('Selected account not found.');
+        showError('Selected account not found');
         return;
     }
-    account.balance += incomeInput;
     
-    // Create income transaction
+    if (amount > account.balance) {
+        showError(`Insufficient funds in account ${account.name}`, document.getElementById('transaction-amount'));
+        return;
+    }
+    
+    // If envelope selected, validate envelope balance
+    if (envelope) {
+        const envelopeBalance = state.envelopes[envelope] || 0;
+        if (amount > envelopeBalance) {
+            showError(`Insufficient funds in envelope ${envelope}`, document.getElementById('transaction-amount'));
+            return;
+        }
+    }
+    
+    // Create transaction
     const transaction = {
-        name: 'Monthly Income',
-        amount: incomeInput,
+        id: Date.now(),
+        name: name,
+        amount: amount,
         date: new Date().toISOString().split('T')[0],
-        type: 'income',
-        toAccount: incomeAccount
+        type: 'expense',
+        fromAccount: accountKey,
+        envelope: envelope,
+        accountName: account.name
     };
     
+    // Update account balance
+    account.balance -= amount;
     account.transactions.push(transaction);
-    state.transactions.push(transaction);
     
-    // Calculate total allocated in envelopes
-    const totalAllocated = Object.values(state.envelopes).reduce((sum, amount) => sum + amount, 0);
-    
-    // Set unallocated amount as remaining income
-    state.unallocatedAmount = incomeInput - totalAllocated;
-    
-    // Initialize monthly history if not exists
-    if (!state.monthlyHistory[currentMonth]) {
-        state.monthlyHistory[currentMonth] = {
-            income: 0,
-            expenses: 0,
-            transactions: []
-        };
+    // Update envelope if selected
+    if (envelope) {
+        state.envelopes[envelope] -= amount;
     }
     
+    // Add to global transactions
+    state.transactions.push(transaction);
+    
     // Update monthly history
-    state.monthlyHistory[currentMonth].income = incomeInput;
+    const currentMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+    if (!state.monthlyHistory[currentMonth]) {
+        state.monthlyHistory[currentMonth] = { income: 0, expenses: 0, transactions: [] };
+    }
+    state.monthlyHistory[currentMonth].expenses += amount;
     state.monthlyHistory[currentMonth].transactions.push(transaction);
     
-    updateDOMContent('income-status', `Monthly Income: ₹${state.monthlyIncome} (Added to ${account.name})`);
-    renderAccounts();
+    // Update UI
+    updateTransactionList();
+    updateEnvelopeDisplay();
+    updateAccountDisplay();
+    updateDashboard();
+    
+    // Clear form
+    document.getElementById('transaction-name').value = '';
+    document.getElementById('transaction-amount').value = '';
+    document.getElementById('transaction-envelope').value = '';
+    document.getElementById('transaction-account').value = '';
+    
+    showSuccess('Transaction added successfully');
     saveState();
-    alert('Income updated successfully!');
 }
 
 // Envelope Management
@@ -226,194 +435,6 @@ function moveUnusedToUnallocated() {
     alert(`Moved ₹${unusedTotal} to unallocated funds.`);
 }
 
-// Account Management
-function addAccount() {
-    const accountName = document.getElementById('account-name').value.trim();
-    const accountNumber = document.getElementById('account-number').value.trim();
-    const accountType = document.getElementById('account-type').value;
-    const accountBalance = parseFloat(document.getElementById('account-balance').value);
-
-    if (!accountName || !accountNumber || !accountType) {
-        alert('Please fill in all account details.');
-        return;
-    }
-    if (!validateInput(accountBalance, "Account Balance")) return;
-    if (accountNumber.length !== 4 || isNaN(accountNumber)) {
-        alert('Please enter valid last 4 digits of account number.');
-        return;
-    }
-
-    const accountKey = `${accountName}-${accountNumber}`;
-    state.accounts[accountKey] = {
-        name: accountName,
-        number: accountNumber,
-        type: accountType,
-        balance: accountBalance,
-        transactions: []
-    };
-
-    renderAll();
-    saveState();
-    alert('Account added successfully!');
-
-    // Clear form
-    document.getElementById('account-name').value = '';
-    document.getElementById('account-number').value = '';
-    document.getElementById('account-type').value = '';
-    document.getElementById('account-balance').value = '';
-}
-
-function renderAccounts() {
-    let content = '<h3>Your Bank Accounts:</h3>';
-    
-    // Group accounts by type
-    const accountsByType = {
-        salary: [],
-        savings: [],
-        emergency: []
-    };
-
-    for (const [accountKey, account] of Object.entries(state.accounts)) {
-        accountsByType[account.type].push({ ...account, key: accountKey });
-    }
-
-    // Render each account type section
-    for (const [type, accounts] of Object.entries(accountsByType)) {
-        if (accounts.length > 0) {
-            content += `<h4>${type.charAt(0).toUpperCase() + type.slice(1)} Accounts</h4>`;
-            content += '<table class="report-table">';
-            content += `
-                <tr>
-                    <th>Account Name</th>
-                    <th>Last 4 Digits</th>
-                    <th>Balance</th>
-                    <th>Actions</th>
-                </tr>`;
-
-            accounts.forEach(account => {
-                content += `
-                    <tr>
-                        <td>${account.name}</td>
-                        <td>****${account.number}</td>
-                        <td>₹${account.balance.toLocaleString()}</td>
-                        <td>
-                            <button onclick="updateAccountBalance('${account.key}')" class="small-button">Update Balance</button>
-                            <button onclick="transferFunds('${account.key}')" class="small-button">Transfer</button>
-                            <button onclick="addAccountRule('${account.key}')" class="small-button">Add Rule</button>
-                            ${account.type === 'emergency' ? `<button onclick="trackEmergencyFund('${account.key}')" class="small-button">Emergency Fund</button>` : ''}
-                        </td>
-                    </tr>`;
-            });
-            content += '</table>';
-        }
-    }
-
-    updateDOMContent('account-display', content);
-}
-
-// Transaction Management
-function addTransaction() {
-    const transactionName = document.getElementById('transaction-name').value.trim();
-    const transactionAmount = parseFloat(document.getElementById('transaction-amount').value);
-    const transactionEnvelope = document.getElementById('transaction-envelope').value;
-    const transactionDate = new Date().toISOString().split('T')[0];
-    const currentMonth = transactionDate.slice(0, 7);
-
-    // Add account selection to transaction
-    const fromAccount = document.getElementById('transaction-account').value;
-
-    if (!transactionName || !fromAccount) {
-        alert('Please fill in all transaction details.');
-        return;
-    }
-    if (!validateInput(transactionAmount, "Transaction Amount")) return;
-
-    const accountKey = fromAccount;
-    const account = state.accounts[accountKey];
-
-    if (!account) {
-        alert('Please select a valid account.');
-        return;
-    }
-
-    if (account.balance < transactionAmount) {
-        alert(`Insufficient funds in account ${account.name}`);
-        return;
-    }
-
-    if (transactionEnvelope && state.envelopes[transactionEnvelope] < transactionAmount) {
-        alert(`Insufficient funds in envelope "${transactionEnvelope}".`);
-        return;
-    }
-
-    const transaction = {
-        name: transactionName,
-        amount: transactionAmount,
-        envelope: transactionEnvelope,
-        date: transactionDate,
-        type: 'expense',
-        fromAccount: accountKey
-    };
-
-    // Update account balance
-    account.balance -= transactionAmount;
-    account.transactions.push(transaction);
-
-    state.transactions.push(transaction);
-
-    // Update monthly history
-    if (!state.monthlyHistory[currentMonth]) {
-        state.monthlyHistory[currentMonth] = {
-            income: 0,
-            expenses: 0,
-            transactions: []
-        };
-    }
-    state.monthlyHistory[currentMonth].expenses += transactionAmount;
-    state.monthlyHistory[currentMonth].transactions.push(transaction);
-
-    if (transactionEnvelope) {
-        state.envelopes[transactionEnvelope] -= transactionAmount;
-    } else {
-        state.unallocatedAmount -= transactionAmount;
-    }
-
-    renderTransactions();
-    renderEnvelopes();
-    renderAccounts();
-    saveState();
-    alert('Transaction added successfully!');
-}
-
-function renderTransactions() {
-    let content = '<h3>Transactions:</h3>';
-    // Sort transactions by date (newest first)
-    const sortedTransactions = [...state.transactions].sort((a, b) => 
-        new Date(b.date) - new Date(a.date)
-    );
-    
-    content += '<div class="transaction-list">';
-    sortedTransactions.forEach(tx => {
-        const formattedDate = new Date(tx.date).toLocaleDateString();
-        const isIncome = tx.type === 'income';
-        const amountClass = isIncome ? 'amount-income' : 'amount-expense';
-        const transactionClass = isIncome ? 'transaction-income' : 'transaction-expense';
-        
-        content += `
-            <div class="transaction-item">
-                <div class="transaction-details">
-                    <span class="transaction-date">${formattedDate}</span>
-                    <span class="${transactionClass}">${tx.name}</span>
-                    ${tx.envelope ? `<span class="transaction-envelope">(${tx.envelope})</span>` : ''}
-                </div>
-                <span class="${amountClass}">₹${tx.amount.toLocaleString()}</span>
-            </div>`;
-    });
-    content += '</div>';
-    
-    updateDOMContent('transaction-list', content);
-}
-
 // Goal Management
 function addGoal() {
     const goalName = document.getElementById('goal-name').value.trim();
@@ -426,9 +447,15 @@ function addGoal() {
     if (!validateInput(goalAmount, "Goal Amount")) return;
 
     state.goals[goalName] = { target: goalAmount, allocated: 0 };
-    renderGoals();
+    updateGoalDisplay();
     updateDropdown('goal-dropdown', Object.keys(state.goals), 'Select Goal');
-    alert(`Goal "${goalName}" added successfully!`);
+    saveState();
+    
+    // Clear input fields
+    document.getElementById('goal-name').value = '';
+    document.getElementById('goal-amount').value = '';
+    
+    showSuccess(`Goal "${goalName}" added successfully!`);
 }
 
 function allocateToGoal() {
@@ -436,7 +463,7 @@ function allocateToGoal() {
     const allocationAmount = parseFloat(document.getElementById('goal-allocation').value);
 
     if (!goalName) {
-        alert('Please select a goal.');
+        showError('Please select a goal.');
         return;
     }
     if (!validateInput(allocationAmount, "Allocation Amount")) return;
@@ -444,8 +471,13 @@ function allocateToGoal() {
     const goal = state.goals[goalName];
     goal.allocated += allocationAmount;
 
-    renderGoals();
-    alert(`Allocated ₹${allocationAmount} to "${goalName}" successfully!`);
+    updateGoalDisplay();
+    saveState();
+    
+    // Clear allocation amount
+    document.getElementById('goal-allocation').value = '';
+    
+    showSuccess(`Allocated ₹${allocationAmount} to "${goalName}" successfully!`);
 }
 
 function renderGoals() {
@@ -631,16 +663,18 @@ function resetData() {
 // Dropdown Update Helper
 function updateDropdown(elementId, items, defaultOption) {
     const dropdown = document.getElementById(elementId);
+    if (!dropdown) return;
+    
     dropdown.innerHTML = `<option value="">${defaultOption}</option>`;
     
     if (Array.isArray(items)) {
-        for (const item of items) {
+        items.forEach(item => {
             if (typeof item === 'object' && item.value && item.text) {
                 dropdown.innerHTML += `<option value="${item.value}">${item.text}</option>`;
             } else {
                 dropdown.innerHTML += `<option value="${item}">${item}</option>`;
             }
-        }
+        });
     }
 }
 
@@ -681,8 +715,8 @@ function transferFunds(fromAccountKey) {
     toAccount.transactions.push(transaction);
     state.transactions.push(transaction);
 
-    renderAccounts();
-    renderTransactions();
+    updateAccountDisplay();
+    updateTransactionList();
     saveState();
     alert('Transfer completed successfully!');
 }
@@ -702,7 +736,7 @@ function updateAccountBalance(accountKey) {
     }
 
     account.balance = balance;
-    renderAccounts();
+    updateAccountDisplay();
     saveState();
     alert('Account balance updated successfully!');
 }
@@ -752,8 +786,9 @@ function moveUnallocatedToAccount() {
     // Reset unallocated amount
     state.unallocatedAmount = 0;
 
-    renderAccounts();
-    renderTransactions();
+    updateAccountDisplay();
+    updateTransactionList();
+    updateDashboard();
     saveState();
     alert(`Moved ₹${transaction.amount} to ${account.name}`);
 }
@@ -841,36 +876,270 @@ function trackEmergencyFund(accountKey) {
     alert('Emergency fund tracking updated successfully!');
 }
 
-// Mobile menu functionality
-function toggleMobileMenu() {
-    const nav = document.getElementById('nav');
-    const toggle = document.getElementById('mobile-menu-toggle');
-    nav.classList.toggle('active');
-    toggle.classList.toggle('active');
+// Enhanced Account Management
+function addAccount() {
+    const name = document.getElementById('account-name').value.trim();
+    const number = document.getElementById('account-number').value.trim();
+    const type = document.getElementById('account-type').value;
+    const balance = document.getElementById('account-balance').value;
+    
+    // Validate inputs
+    if (!validateInput(name, ['required', 'accountName'])) {
+        showError('Please enter a valid account name (3-50 characters)', document.getElementById('account-name'));
+        return;
+    }
+    
+    if (!validateInput(number, ['accountNumber'])) {
+        showError('Please enter valid last 4 digits of account number', document.getElementById('account-number'));
+        return;
+    }
+    
+    if (!validateInput(balance, ['amount'])) {
+        showError('Please enter a valid balance amount', document.getElementById('account-balance'));
+        return;
+    }
+    
+    if (!validateInput(type, ['required'])) {
+        showError('Please select an account type', document.getElementById('account-type'));
+        return;
+    }
+    
+    // Add account to state with a unique key
+    const accountKey = `${name}-${number}`;
+    state.accounts[accountKey] = {
+        name: name,
+        number: number,
+        type: type,
+        balance: parseFloat(balance),
+        transactions: []
+    };
+    
+    // Update UI and dropdowns
+    updateAccountDisplay();
+    updateDashboard();
+    updateAccountDropdowns();
+    
+    // Clear form
+    document.getElementById('account-name').value = '';
+    document.getElementById('account-number').value = '';
+    document.getElementById('account-type').value = '';
+    document.getElementById('account-balance').value = '';
+    
+    showSuccess('Account added successfully');
+    saveState();
 }
 
-// Close mobile menu when clicking outside
-document.addEventListener('click', (e) => {
+// Add this new function to update all account dropdowns
+function updateAccountDropdowns() {
+    const accountOptions = Object.entries(state.accounts).map(([key, account]) => ({
+        value: key,
+        text: `${account.name} (${account.type})`
+    }));
+    
+    // Update income account dropdown
+    updateDropdown('income-account', accountOptions, 'Select Account for Income');
+    
+    // Update transaction account dropdown
+    updateDropdown('transaction-account', accountOptions, 'Select Account');
+    
+    // Update month-end account dropdown
+    updateDropdown('month-end-account', accountOptions, 'Select Account for Unallocated Funds');
+}
+
+function showSection(sectionId) {
+    // Hide all sections
+    const sections = document.querySelectorAll('.content-section');
+    sections.forEach(section => section.classList.add('hidden'));
+    
+    // Show target section
+    const targetSection = document.getElementById(sectionId);
+    if (targetSection) {
+        targetSection.classList.remove('hidden');
+    }
+    
+    // Update active nav button
+    const navButtons = document.querySelectorAll('.nav-button');
+    navButtons.forEach(button => {
+        button.classList.remove('active');
+        if (button.getAttribute('onclick')?.includes(sectionId)) {
+            button.classList.add('active');
+        }
+    });
+    
+    // Close mobile menu if open
     const nav = document.getElementById('nav');
     const toggle = document.getElementById('mobile-menu-toggle');
-    const isNavClick = nav.contains(e.target);
-    const isToggleClick = toggle.contains(e.target);
-    
-    if (!isNavClick && !isToggleClick && nav.classList.contains('active')) {
+    if (nav.classList.contains('active')) {
         nav.classList.remove('active');
         toggle.classList.remove('active');
     }
-});
 
-// Initialize the app
-document.addEventListener('DOMContentLoaded', () => {
-    initTheme();
-    loadState();
-    showSection('income');
-    
-    // Add mobile menu toggle listener
-    document.getElementById('mobile-menu-toggle').addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleMobileMenu();
+    // Smooth scroll to section
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
     });
-});
+}
+
+// Function to show dashboard
+function showDashboard() {
+    showSection('dashboard');
+    updateDashboard();
+}
+
+// Income Management
+function saveIncome() {
+    const incomeInput = parseFloat(document.getElementById('income-input').value);
+    const incomeAccountKey = document.getElementById('income-account').value;
+
+    if (!validateInput(incomeInput, ['amount'])) {
+        showError('Please enter a valid income amount', document.getElementById('income-input'));
+        return;
+    }
+    if (!incomeAccountKey) {
+        showError('Please select an account for the income', document.getElementById('income-account'));
+        return;
+    }
+
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    state.monthlyIncome = incomeInput;
+    
+    // Update account balance
+    const account = state.accounts[incomeAccountKey];
+    if (!account) {
+        showError('Selected account not found');
+        return;
+    }
+    account.balance += incomeInput;
+    
+    // Create income transaction
+    const transaction = {
+        id: Date.now(), // Add unique ID to prevent duplicates
+        name: 'Monthly Income',
+        amount: incomeInput,
+        date: new Date().toISOString().split('T')[0],
+        type: 'income',
+        toAccount: incomeAccountKey,
+        accountName: account.name
+    };
+    
+    // Remove any previous income transactions for this month to prevent duplicates
+    account.transactions = account.transactions.filter(t => 
+        !(t.type === 'income' && t.date.startsWith(currentMonth))
+    );
+    state.transactions = state.transactions.filter(t => 
+        !(t.type === 'income' && t.date.startsWith(currentMonth))
+    );
+    
+    // Add new transaction
+    account.transactions.push(transaction);
+    state.transactions.push(transaction);
+    
+    // Calculate total allocated in envelopes
+    const totalAllocated = Object.values(state.envelopes).reduce((sum, amount) => sum + amount, 0);
+    
+    // Set unallocated amount as remaining income
+    state.unallocatedAmount = incomeInput - totalAllocated;
+    
+    // Initialize or update monthly history
+    if (!state.monthlyHistory[currentMonth]) {
+        state.monthlyHistory[currentMonth] = {
+            income: 0,
+            expenses: 0,
+            transactions: []
+        };
+    }
+    
+    // Update monthly history (remove old income entry first)
+    state.monthlyHistory[currentMonth].transactions = 
+        state.monthlyHistory[currentMonth].transactions.filter(t => t.type !== 'income');
+    state.monthlyHistory[currentMonth].income = incomeInput;
+    state.monthlyHistory[currentMonth].transactions.push(transaction);
+    
+    updateDOMContent('income-status', `Monthly Income: ₹${state.monthlyIncome.toLocaleString()} (Added to ${account.name})`);
+    updateAccountDisplay();
+    updateTransactionList();
+    updateDashboard();
+    
+    // Clear input
+    document.getElementById('income-input').value = '';
+    document.getElementById('income-account').value = '';
+    
+    showSuccess('Income updated successfully');
+    saveState();
+}
+
+// Transaction Display Functions
+function updateTransactionList() {
+    let content = '<h3>Recent Transactions:</h3>';
+    content += '<div class="transaction-list">';
+    
+    // Sort transactions by date (newest first)
+    const sortedTransactions = [...state.transactions].sort((a, b) => 
+        new Date(b.date) - new Date(a.date)
+    );
+    
+    sortedTransactions.forEach(tx => {
+        const formattedDate = new Date(tx.date).toLocaleDateString();
+        const amountClass = tx.type === 'income' ? 'amount-income' : 'amount-expense';
+        const transactionClass = tx.type === 'income' ? 'transaction-income' : 'transaction-expense';
+        
+        content += `
+            <div class="transaction-item">
+                <div class="transaction-details">
+                    <span class="transaction-date">${formattedDate}</span>
+                    <span class="${transactionClass}">${tx.name}</span>
+                    ${tx.envelope ? `<span class="transaction-envelope">(${tx.envelope})</span>` : ''}
+                </div>
+                <span class="${amountClass}">₹${tx.amount.toLocaleString()}</span>
+            </div>`;
+    });
+    
+    content += '</div>';
+    updateDOMContent('transaction-list', content);
+}
+
+// Enhanced Envelope Display
+function updateEnvelopeDisplay() {
+    let content = '<h3>Your Envelopes:</h3>';
+    content += '<div class="envelope-grid">';
+    
+    for (const [name, amount] of Object.entries(state.envelopes)) {
+        const percentage = (amount / state.monthlyIncome * 100).toFixed(1);
+        content += `
+            <div class="envelope-card">
+                <h4>${name}</h4>
+                <p class="envelope-amount">₹${amount.toLocaleString()}</p>
+                <p class="envelope-percentage">${percentage}% of income</p>
+                <div class="envelope-progress">
+                    <div class="progress-bar" style="width: ${percentage}%"></div>
+                </div>
+            </div>`;
+    }
+    
+    content += '</div>';
+    updateDOMContent('envelope-display', content);
+}
+
+function updateGoalDisplay() {
+    let content = '<h3>Financial Goals:</h3>';
+    content += '<div class="goals-grid">';
+    
+    for (const [name, { target, allocated }] of Object.entries(state.goals)) {
+        const progress = (allocated / target * 100).toFixed(1);
+        content += `
+            <div class="goal-card">
+                <h4>${name}</h4>
+                <div class="goal-details">
+                    <p class="goal-amount">₹${allocated.toLocaleString()} / ₹${target.toLocaleString()}</p>
+                    <p class="goal-progress">${progress}% Complete</p>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress" style="width: ${progress}%"></div>
+                </div>
+            </div>`;
+    }
+    
+    content += '</div>';
+    updateDOMContent('goal-display', content);
+}
