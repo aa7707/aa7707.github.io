@@ -161,6 +161,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Wrap select elements with custom container
+    const selects = document.querySelectorAll('select');
+    selects.forEach(select => {
+        // Create wrapper if not already wrapped
+        if (!select.parentElement.classList.contains('select-container')) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'select-container';
+            select.parentNode.insertBefore(wrapper, select);
+            wrapper.appendChild(select);
+        }
+
+        // Add animation to options when select is clicked
+        select.addEventListener('mousedown', function(e) {
+            const options = this.querySelectorAll('option');
+            options.forEach((option, index) => {
+                option.style.animationDelay = `${index * 50}ms`;
+            });
+        });
+    });
+
     // Initialize mobile menu toggle
     const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
     const nav = document.getElementById('nav');

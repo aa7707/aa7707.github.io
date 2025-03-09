@@ -1,25 +1,25 @@
 :root {
-    /* Light theme variables */
-    --bg-primary: #ffffff;
-    --bg-secondary: #f8f9fa;
-    --text-primary: #2d3436;
-    --text-secondary: #636e72;
-    --accent-primary: #0984e3;
-    --accent-secondary: #74b9ff;
-    --border-color: #dfe6e9;
-    --success-color: #00b894;
-    --warning-color: #fdcb6e;
-    --error-color: #d63031;
+    /* Light theme variables - New Modern Color Scheme */
+    --bg-primary: #f8f9ff;
+    --bg-secondary: #ffffff;
+    --text-primary: #2a2f45;
+    --text-secondary: #6b7280;
+    --accent-primary: #6366f1;
+    --accent-secondary: #818cf8;
+    --border-color: #e5e7eb;
+    --success-color: #22c55e;
+    --warning-color: #eab308;
+    --error-color: #ef4444;
     --card-bg: #ffffff;
-    --input-bg: #f8f9fa;
-    --button-hover: #0770c5;
+    --input-bg: #ffffff;
+    --button-hover: #4f46e5;
     --nav-height: 70px;
     --header-height: 70px;
     --content-spacing: 2.5rem;
     --section-spacing: 2rem;
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
-    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
-    --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+    --shadow-sm: 0 2px 4px rgba(99, 102, 241, 0.05);
+    --shadow-md: 0 4px 6px rgba(99, 102, 241, 0.1);
+    --shadow-lg: 0 10px 15px rgba(99, 102, 241, 0.1);
     --radius-sm: 0.25rem;
     --radius-md: 0.5rem;
     --radius-lg: 1rem;
@@ -28,19 +28,19 @@
 
 [data-theme="dark"] {
     /* Dark theme variables */
-    --bg-primary: #1a1b1e;
-    --bg-secondary: #2d2e32;
-    --text-primary: #ffffff;
-    --text-secondary: #a0a0a0;
-    --accent-primary: #74b9ff;
-    --accent-secondary: #0984e3;
-    --border-color: #404246;
-    --success-color: #00d1a0;
-    --warning-color: #ffeaa7;
-    --error-color: #ff7675;
-    --card-bg: #2d2e32;
-    --input-bg: #404246;
-    --button-hover: #63a4e6;
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --accent-primary: #60a5fa;
+    --accent-secondary: #3b82f6;
+    --border-color: #334155;
+    --success-color: #34d399;
+    --warning-color: #fbbf24;
+    --error-color: #f87171;
+    --card-bg: #1e293b;
+    --input-bg: #334155;
+    --button-hover: #2563eb;
 }
 
 * {
@@ -73,7 +73,7 @@ body {
     left: 0;
     right: 0;
     height: var(--header-height);
-    background-color: var(--bg-secondary);
+    background-color: var(--bg-primary);
     border-bottom: 1px solid var(--border-color);
     z-index: 1000;
     padding: 0 var(--content-spacing);
@@ -140,19 +140,21 @@ body {
     width: 100%;
     text-align: left;
     padding: 1rem 1.5rem;
-    background: none;
+    background: var(--bg-primary);
     color: var(--text-primary);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
     margin-bottom: 0.5rem;
     margin: 0.5rem;
     background: transparent;
 }
 
 .nav-button:hover {
-    background-color: var(--accent-primary);
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
     color: white;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
 .nav-button.danger {
@@ -283,6 +285,7 @@ button:hover {
     box-shadow: var(--shadow-md);
     transition: all var(--transition-speed) ease;
     margin-bottom: var(--section-spacing);
+    border: 1px solid var(--border-color);
 }
 
 .content-section.hidden {
@@ -324,6 +327,11 @@ h3 {
 .report-table th {
     background-color: var(--bg-secondary);
     font-weight: 600;
+    color: var(--accent-primary);
+}
+
+.report-table tr:hover {
+    background: var(--bg-secondary);
 }
 
 /* Account Form */
@@ -344,6 +352,9 @@ h3 {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background: var(--bg-primary);
+    margin-bottom: 0.5rem;
+    border-radius: var(--radius-md);
 }
 
 .transaction-item:last-child {
@@ -384,9 +395,9 @@ h3 {
 
 /* Active section indicator for nav buttons */
 .nav-button.active {
-    background-color: var(--accent-primary);
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
     color: white;
-    border-color: var(--accent-primary);
+    border-color: transparent;
 }
 
 /* Responsive Design */
@@ -517,12 +528,12 @@ h3 {
 }
 
 .status-success {
-    background: var(--success-color);
+    background: linear-gradient(135deg, var(--success-color), #15803d);
     color: white;
 }
 
 .status-error {
-    background: var(--error-color);
+    background: linear-gradient(135deg, var(--error-color), #b91c1c);
     color: white;
 }
 
@@ -545,11 +556,13 @@ h3 {
     padding: 1.5rem;
     box-shadow: var(--shadow-sm);
     transition: transform var(--transition-speed) ease;
+    border: 1px solid var(--border-color);
 }
 
 .envelope-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
+    border-color: var(--accent-primary);
 }
 
 .envelope-card h4 {
@@ -581,7 +594,7 @@ h3 {
 
 .progress-bar {
     height: 100%;
-    background: var(--accent-primary);
+    background: linear-gradient(90deg, #6366f1, #818cf8);
     border-radius: var(--radius-sm);
     transition: width 0.3s ease;
 }
@@ -601,11 +614,9 @@ h3 {
 }
 
 .transaction-item:hover {
-    background-color: var(--bg-secondary);
-}
-
-.transaction-item:last-child {
-    border-bottom: none;
+    background: var(--bg-secondary);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
 }
 
 .transaction-details {
@@ -665,10 +676,10 @@ h3 {
         top: 60px;
         width: 80%;
         height: calc(100vh - 60px);
-        background-color: var(--bg-secondary);
+        background-color: var(--bg-primary);
         transition: left 0.3s ease;
         z-index: 1000;
-        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--shadow-lg);
     }
 
     .main-nav.active {
@@ -678,14 +689,19 @@ h3 {
     .nav-content {
         flex-direction: column;
         padding: 1rem;
-        background-color: var(--bg-secondary);
+        background-color: var(--bg-primary);
     }
 
     .nav-button {
         width: 100%;
         margin: 0.5rem 0;
         text-align: left;
-        background-color: var(--bg-primary);
+        background-color: var(--bg-secondary);
+        border-radius: var(--radius-md);
+    }
+
+    .nav-button:active {
+        transform: scale(0.98);
     }
 
     .main-content.nav-open {
@@ -697,3 +713,136 @@ h3 {
         padding: 0 1rem;
     }
 }
+
+/* Add subtle animations */
+.nav-button, .envelope-card, .goal-card, .transaction-item {
+    transition: all 0.3s ease;
+}
+
+/* Enhanced form elements */
+input, select {
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+input:focus, select:focus {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--accent-secondary);
+}
+
+button {
+    background: var(--accent-primary);
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    background: var(--button-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+/* Enhanced Select/Dropdown Styles */
+select {
+    appearance: none;
+    padding-right: 2.5rem !important;
+    background: var(--input-bg) url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") no-repeat right 0.75rem center;
+    background-size: 1em;
+    cursor: pointer;
+}
+
+/* Custom select container for better control */
+.select-container {
+    position: relative;
+    width: 100%;
+    margin-bottom: 1.5rem;
+}
+
+.select-container select:focus {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+/* Dark mode adjustments for select */
+[data-theme="dark"] select {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f1f5f9' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+}
+
+/* Style select options - works in Firefox */
+select option {
+    padding: 1rem;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    animation: dropdownAppear 0.2s ease;
+}
+
+select option:hover {
+    background-color: var(--accent-primary);
+    color: white;
+}
+
+/* Dropdown Animation */
+@keyframes dropdownAppear {
+    0% {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Custom scrollbar styling for Webkit browsers */
+select::-webkit-scrollbar {
+    width: 8px;
+}
+
+select::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+    border-radius: 4px;
+}
+
+select::-webkit-scrollbar-thumb {
+    background: var(--accent-primary);
+    border-radius: 4px;
+}
+
+select::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-secondary);
+}
+
+/* Style the dropdown when opened - works in modern browsers */
+select:focus option {
+    padding: 1rem;
+    margin: 0.25rem;
+    border-radius: var(--radius-sm);
+}
+
+/* Wrap all existing select elements with the container */
+.form-group select,
+#income-account,
+#transaction-account,
+#transaction-envelope,
+#month-end-account,
+#goal-dropdown,
+#account-type {
+    margin-bottom: 0;
+}
+
+/* Add this to your existing HTML via JavaScript */
+document.addEventListener('DOMContentLoaded', function() {
+    const selects = document.querySelectorAll('select');
+    selects.forEach(select => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'select-container';
+        select.parentNode.insertBefore(wrapper, select);
+        wrapper.appendChild(select);
+    });
+});
